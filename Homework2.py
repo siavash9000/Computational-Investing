@@ -40,6 +40,8 @@ def find_events(ls_symbols, d_data):
     print df_events
     # Time stamps for the event range
     ldt_timestamps = df_close.index
+    print "------------------------------------------------------------------"
+    print ldt_timestamps
 
     for s_sym in ls_symbols:
         for i in range(1, len(ldt_timestamps)):
@@ -63,7 +65,7 @@ if __name__ == '__main__':
     ldt_timestamps = du.getNYSEdays(dt_start, dt_end, dt.timedelta(hours=16))
 
     dataobj = da.DataAccess('Yahoo')
-    ls_symbols = dataobj.get_symbols_from_list('sp5002012')
+    ls_symbols = dataobj.get_symbols_from_list('sp5002008')
     ls_symbols.append('SPY')
 
     print "reading data"
