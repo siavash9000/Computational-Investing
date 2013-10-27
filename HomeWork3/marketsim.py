@@ -55,31 +55,29 @@ def get_stockdata(startdate, enddate, stocks):
 def create_tradematrix(stockdata, tradingdays, symbols):
     tradematrix = pandas.DataFrame(stockdata, index=tradingdays, columns=symbols)
     #init tradematrix with zeros
-    for day in tradingdays:
-        for symbol in symbols:
-            tradematrix[:day][symbol] = 0
+    for symbol in symbols:
+       tradematrix[:][symbol] = 0.0
     return tradematrix
 
 
 def addorders(tradematrix, dates, symbols, orders):
     for order in orders:
-        current = tradematrix[order[0]:tradematrix.index[-1]][order[1]]
-        tradematrix[order[0]:tradematrix.index[-1]][order[1]] = current + order[2]
+        tradematrix[order[0]:tradematrix.index[-1]][order[1]] += order[2]
 
 
 def create_cashseries(tradingdays, startcash, orders, prices):
     cash = pandas.Series(0, index=tradingdays)
-    cash[0:-1] = startcash
+    cash[0:-1] = float(startcash)
     for day in tradingdays:
        for order in orders:
             if order[0] == day:
-                cash[day:day] = cash[day:day] - prices[day:day][order[1]]*order[2]
-                cash[day:tradingdays[-1]] = cash[day:day]
+                cash[day:cash.index[-1]] = cash[day:day] - prices[day:day][order[1]]*order[2]
+
     return cash
 
 
 def main():
-    startcash = int(sys.argv[1])
+    startcash = float(sys.argv[1])
     order_filename = sys.argv[2]
     outputfilename = sys.argv[3]
     dates, symbols, orders = extract_dates_and_symbols(order_filename)
@@ -87,17 +85,24 @@ def main():
     endtime = max(dates) + datetime.timedelta(days=1)
     stockdata, tradingdays = get_stockdata(starttime, endtime, symbols)
     prices = stockdata['close']
-    adjustedprices = stockdata['actual_close']
+    prices = prices.fillna(method='ffill')
+    prices = prices.fillna(method='bfill')
+
+    adjustedprices = stockdata['close']
     tradematrix = create_tradematrix(stockdata, tradingdays, symbols)
     addorders(tradematrix, dates, symbols, orders)
     cash = create_cashseries(tradingdays, startcash, orders, prices)
     adjustedprices['_CASH'] = 1.0
     tradematrix['_CASH'] = cash
+    #for day in tradematrix.index:
+    #    print tradematrix[day:day]
+    #    print adjustedprices[day:day]
+
     tradematrix = tradematrix*adjustedprices
     tradematrix['_VALUE'] = 0.0
     for day in tradematrix.index:
         for symbol in symbols:
-            tradematrix[day:day]['_VALUE'] = tradematrix[day:day]['_VALUE'] + tradematrix[day:day][symbol]
+            tradematrix[day:day]['_VALUE'] += tradematrix[day:day][symbol]
         tradematrix[day:day]['_VALUE'] = tradematrix[day:day]['_VALUE'] + tradematrix[day:day]['_CASH']
         print tradematrix[day:day]
 
