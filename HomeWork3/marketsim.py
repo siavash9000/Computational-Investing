@@ -88,23 +88,21 @@ def main():
     prices = prices.fillna(method='ffill')
     prices = prices.fillna(method='bfill')
 
-    adjustedprices = stockdata['close']
     tradematrix = create_tradematrix(stockdata, tradingdays, symbols)
     addorders(tradematrix, dates, symbols, orders)
     cash = create_cashseries(tradingdays, startcash, orders, prices)
-    adjustedprices['_CASH'] = 1.0
+    prices['_CASH'] = 1.0
     tradematrix['_CASH'] = cash
-    #for day in tradematrix.index:
-    #    print tradematrix[day:day]
-    #    print adjustedprices[day:day]
-
-    tradematrix = tradematrix*adjustedprices
+    tradematrix = tradematrix*prices
     tradematrix['_VALUE'] = 0.0
+    writer = csv.writer(open(outputfilename,'wb'),delimiter=',')
     for day in tradematrix.index:
         for symbol in symbols:
             tradematrix[day:day]['_VALUE'] += tradematrix[day:day][symbol]
         tradematrix[day:day]['_VALUE'] = tradematrix[day:day]['_VALUE'] + tradematrix[day:day]['_CASH']
-        print tradematrix[day:day]
+        print(tradematrix[day:day]['_VALUE'].to_string())
+        row = day , int(tradematrix[day:day]['_VALUE'])
+        writer.writerow(row)
 
 if __name__ == '__main__':
     main()
