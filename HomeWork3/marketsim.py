@@ -3,13 +3,10 @@ __author__ = 'siavash'
 # QSTK Imports
 import QSTK.qstkutil.qsdateutil as dateUtil
 import QSTK.qstkutil.DataAccess as dataAccess
-import numpy as numpy
 
 # Third Party Imports
 import datetime
 import pandas
-import copy
-import QSTK.qstkutil.tsutil as tsutil
 import csv
 import sys
 
@@ -101,7 +98,7 @@ def main():
             tradematrix[day:day]['_VALUE'] += tradematrix[day:day][symbol]
         tradematrix[day:day]['_VALUE'] = tradematrix[day:day]['_VALUE'] + tradematrix[day:day]['_CASH']
         print(tradematrix[day:day]['_VALUE'].to_string())
-        row = day , int(tradematrix[day:day]['_VALUE'])
+        row = day.year,day.month,day.day,int(tradematrix[day:day]['_VALUE'])
         writer.writerow(row)
 
 if __name__ == '__main__':
