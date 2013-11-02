@@ -14,6 +14,11 @@ import sys
 import datetime
 import pandas
 import QSTK.qstkutil.tsutil as tsutil
+import datetime
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import matplotlib.cbook as cbook
 print "Pandas Version", pandas.__version__
 
 
@@ -64,11 +69,9 @@ def main():
     benchmark_symbol = sys.argv[2]
     dates, values = extract_dates_and_values(values_filename)
     print simulate(values)
-    import datetime
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
-    import matplotlib.cbook as cbook
+
+    ########Extract graph drawing to class
+
 
     years    = mdates.YearLocator()   # every year
     months   = mdates.MonthLocator()  # every month
@@ -80,8 +83,6 @@ def main():
     # the date column
 
     fig, ax = plt.subplots()
-    ax.plot(dates, values)
-
 
     # format the ticks
     ax.xaxis.set_major_locator(years)
@@ -91,7 +92,11 @@ def main():
     datemin = datetime.date(dates[0].year, 1, 1)
     datemax = datetime.date(dates[-1].year+1, 1, 1)
     ax.set_xlim(datemin, datemax)
-
+    stockdata = get_stockdata(dates[0],dates[-1],[benchmark_symbol])
+    print stockdata['close']['SPY'].values
+    print len(stockdata['close']['SPY'].index),len(dates)
+    #ax.plot(dates, values)
+    ax.plot(dates, stockdata['actual_close']['SPY'].values)
     # format the coords message box
     def price(x): return '$%1.2f'%x
     ax.format_xdata = mdates.DateFormatter('%Y-%m-%d')

@@ -49,6 +49,7 @@ def get_stockdata(startdate, enddate, stocks):
     return stockdata, tradingdays
 
 
+import csv
 def create_tradematrix(stockdata, tradingdays, symbols):
     tradematrix = pandas.DataFrame(stockdata, index=tradingdays, columns=symbols)
     #init tradematrix with zeros
