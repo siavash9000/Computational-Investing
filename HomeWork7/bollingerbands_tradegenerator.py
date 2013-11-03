@@ -73,10 +73,9 @@ def compute_bollingerbands(close, symbols):
     rollingmean = {}
     rollingstd = {}
     bollinger_value = {}
-    for symbol in symbols:
-        rollingmean[symbol] = pandas.rolling_mean(close[symbol], 20)
-        rollingstd[symbol] = pandas.rolling_std(close[symbol], 20)
-        bollinger_value[symbol] = (close[symbol] - rollingmean[symbol]) / rollingstd[symbol]
+    rollingmean = pandas.rolling_mean(close, 20)
+    rollingstd = pandas.rolling_std(close, 20)
+    bollinger_value = (close - rollingmean) / rollingstd
     return bollinger_value
 
 
@@ -89,7 +88,7 @@ def main():
     print("Startdate:",startdate)
     print("Enddate",enddate)
     prices, symbols = loadprices(timestamps)
-    close = prices['actual_close']
+    close = prices['close']
     bollinger_value = compute_bollingerbands(close, symbols)
     df_events = findevents(prices,symbols,timestamps, bollinger_value,"orders.csv")
     ep.eventprofiler(df_events, prices, i_lookback=20, i_lookforward=20,
