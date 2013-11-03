@@ -32,7 +32,7 @@ def simulate(values):
     sharperatio = tsutil.get_sharpe_ratio(dailyreturns)
     # Estimate portfolio returns>
     cumulativereturn = numpy.prod(dailyreturns+1)
-    return sharperatio,standarddeviation,averagedailyreturn,cumulativereturn
+    return sharperatio,standarddeviation,averagedailyreturn,cumulativereturn, dailyreturns
 
 
 def extract_dates_and_values(filename):
@@ -56,61 +56,62 @@ def _read_bench(symbol, timestamps):
     return close[symbol]
 
 
+def analyzebenchmark(benchmark_symbol, dates):
+    stockdata = _read_bench(benchmark_symbol, dates)
+    #print stockdata
+    sharperatio, standarddeviation, averagedailyreturn, cumulativereturn, dailyreturns = simulate(stockdata)
+    print benchmark_symbol, " analysis"
+    print "sharperatio:", sharperatio
+    print "standarddeviation:", standarddeviation
+    print "averagedailyreturn", averagedailyreturn
+    print "cumulativereturn", cumulativereturn
+    return dailyreturns+1
+
+
+def draw_timeseries(benchmark_symbol, dates, values, benchmark_values):
+    years = mdates.YearLocator()   # every year
+    months = mdates.MonthLocator()  # every month
+    yearsFmt = mdates.DateFormatter('%Y')
+    fig, ax = plt.subplots()
+    # format the ticks
+    ax.xaxis.set_major_locator(years)
+    ax.xaxis.set_major_formatter(yearsFmt)
+    ax.xaxis.set_minor_locator(months)
+    datemin = datetime.date(dates[0].year, 1, 1)
+    datemax = datetime.date(dates[-1].year + 1, 1, 1)
+    ax.set_xlim(datemin, datemax)
+    ax.plot(dates, values)
+    ax.plot(dates,benchmark_values)
+    # format the coords message box
+    def price(x): return '$%1.2f' % x
+
+    ax.format_xdata = mdates.DateFormatter('%Y-%m-%d')
+    ax.format_ydata = price
+    ax.grid(True)
+    # rotates and right aligns the x labels, and moves the bottom of the
+    # axes up to make room for them
+    fig.autofmt_xdate()
+    plt.title("Your portfolio returns, benchmark "+benchmark_symbol)
+    plt.show()
+
+
+
 def main():
     # Start and End date of the charts
     values_filename = sys.argv[1]
     benchmark_symbol = sys.argv[2]
     dates, values = extract_dates_and_values(values_filename)
 
-    sharperatio,standarddeviation,averagedailyreturn,cumulativereturn=simulate(values)
+    sharperatio,standarddeviation,averagedailyreturn,cumulativereturn, dailyreturns =simulate(values)
     print "fund analysis"
     print "sharperatio:",sharperatio
     print "standarddeviation:",standarddeviation
     print "averagedailyreturn",averagedailyreturn
     print "cumulativereturn", cumulativereturn
-
-    ########Extract graph drawing to class
-
-
-    years    = mdates.YearLocator()   # every year
-    months   = mdates.MonthLocator()  # every month
-    yearsFmt = mdates.DateFormatter('%Y')
-
-    # load a numpy record array from yahoo csv data with fields date,
-    # open, close, volume, adj_close from the mpl-data/example directory.
-    # The record array stores python datetime.date as an object array in
-    # the date column
-
-    fig, ax = plt.subplots()
-
-    # format the ticks
-    ax.xaxis.set_major_locator(years)
-    ax.xaxis.set_major_formatter(yearsFmt)
-    ax.xaxis.set_minor_locator(months)
-
-    datemin = datetime.date(dates[0].year, 1, 1)
-    datemax = datetime.date(dates[-1].year+1, 1, 1)
-    ax.set_xlim(datemin, datemax)
-    stockdata = _read_bench(benchmark_symbol,dates)
-    #print stockdata
-    sharperatio,standarddeviation,averagedailyreturn,cumulativereturn=simulate(stockdata)
-    print benchmark_symbol," analysis"
-    print "sharperatio:",sharperatio
-    print "standarddeviation:",standarddeviation
-    print "averagedailyreturn",averagedailyreturn
-    print "cumulativereturn", cumulativereturn
-    ax.plot(dates, values)
-    # format the coords message box
-    def price(x): return '$%1.2f'%x
-    ax.format_xdata = mdates.DateFormatter('%Y-%m-%d')
-    ax.format_ydata = price
-    ax.grid(True)
-
-    # rotates and right aligns the x labels, and moves the bottom of the
-    # axes up to make room for them
-    fig.autofmt_xdate()
-
-    plt.show()
+    dailyreturns_benchmark = analyzebenchmark(benchmark_symbol, dates)
+    dailyreturns_benchmark[0] = dailyreturns_benchmark[0]*values[0]
+    benchmark_returns = dailyreturns_benchmark.cumprod()
+    draw_timeseries(benchmark_symbol, dates, values, benchmark_returns)
 if __name__ == '__main__':
     main()
 
